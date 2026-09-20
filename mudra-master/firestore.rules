@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global safety catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Validator for User Entity
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'currentLevel', 'streak', 'totalMasteryPoints'])
+        && data.keys().size() <= 11
+        && data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid
+        && data.currentLevel is string && data.currentLevel.size() <= 100
+        && data.streak is int && data.streak >= 0
+        && data.totalMasteryPoints is int && data.totalMasteryPoints >= 0
+        && (!('displayName' in data) || (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)))
+        && (!('email' in data) || (data.email == null || (data.email is string && data.email.size() <= 256)))
+        && (!('lastPracticeTime' in data) || (data.lastPracticeTime == null || (data.lastPracticeTime is string && data.lastPracticeTime.size() <= 100)))
+        && (!('preferredDanceForm' in data) || (data.preferredDanceForm == null || (data.preferredDanceForm is string && data.preferredDanceForm.size() <= 100)))
+        && (!('unlockedBadges' in data) || (data.unlockedBadges is list && data.unlockedBadges.size() <= 100))
+        && (!('lastBackupAt' in data) || (data.lastBackupAt == null || (data.lastBackupAt is string && data.lastBackupAt.size() <= 100)))
+        && (!('completedTutorialsCount' in data) || (data.completedTutorialsCount is int && data.completedTutorialsCount >= 0));
+    }
+
+    // Validator for MudraProgress Entity
+    function isValidMudraProgress(data, userId, mudraId) {
+      return data.keys().hasAll(['userId', 'mudraId', 'highestScore', 'totalPracticeSessions', 'tutorialCompleted'])
+        && data.keys().size() <= 6
+        && data.userId is string && data.userId == userId && data.userId == request.auth.uid
+        && data.mudraId is string && data.mudraId == mudraId && data.mudraId.size() <= 128
+        && data.highestScore is int && data.highestScore >= 0 && data.highestScore <= 100
+        && data.totalPracticeSessions is int && data.totalPracticeSessions >= 0
+        && data.tutorialCompleted is bool
+        && (!('lastPracticedAt' in data) || (data.lastPracticedAt == null || (data.lastPracticedAt is string && data.lastPracticedAt.size() <= 100)));
+    }
+
+    // --- Collections Configurations ---
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && isValidId(userId);
+      allow update: if isOwner(userId) && isValidUser(incoming()) && isValidId(userId);
+      allow delete: if isOwner(userId);
+
+      match /progress/{mudraId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidMudraProgress(incoming(), userId, mudraId) && isValidId(userId) && isValidId(mudraId);
+        allow update: if isOwner(userId) && isValidMudraProgress(incoming(), userId, mudraId) && isValidId(userId) && isValidId(mudraId);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "NatyaMudra",
+  "description": "Interactive AI-powered learning and correction platform for classical Indian dance hand gestures (mudras) with real-time pose analysis, guided tutorials, and spiritual/cultural insights.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

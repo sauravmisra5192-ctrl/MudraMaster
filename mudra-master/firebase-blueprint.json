@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile documenting current levels, daily streaks, unlocked achievements, and selected dancing forms.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique Firebase Auth User ID" },
+        "displayName": { "type": "string", "description": "The user's display name" },
+        "email": { "type": "string", "description": "The user's secure private email address" },
+        "currentLevel": { "type": "string", "description": "The named level: beginner, practitioner, or master" },
+        "streak": { "type": "integer", "description": "Consecutive daily practice sessions" },
+        "lastPracticeTime": { "type": "string", "format": "date-time", "description": "Timestamp of the user's latest gesture practice session" },
+        "preferredDanceForm": { "type": "string", "description": "Primary dance style selection (e.g., Bharatnatyam, Kathakali, Kuchipudi, Odissi)" },
+        "unlockedBadges": { "type": "array", "description": "List of unlocked reward string IDs" },
+        "totalMasteryPoints": { "type": "integer", "description": "The user's cumulative mastery score across modes" }
+      },
+      "required": ["uid", "currentLevel", "streak", "totalMasteryPoints"]
+    },
+    "MudraProgress": {
+      "title": "MudraProgress",
+      "description": "A sub-collection representing tutorial progress and practice benchmarks for specific hand gestures.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The user's unique Firebase Auth identifier matching parent document" },
+        "mudraId": { "type": "string", "description": "The unique identifier of the mudra gesture" },
+        "highestScore": { "type": "integer", "description": "The peak performance percentage scored" },
+        "totalPracticeSessions": { "type": "integer", "description": "Count of times this gesture has been trained in practice mode" },
+        "tutorialCompleted": { "type": "boolean", "description": "Whether the user successfully completed the multi-step guided tutorial" },
+        "lastPracticedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the most recent practice run" }
+      },
+      "required": ["userId", "mudraId", "highestScore", "totalPracticeSessions", "tutorialCompleted"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user details and credentials"
+    },
+    "/users/{userId}/progress/{mudraId}": {
+      "schema": "MudraProgress",
+      "description": "Performance history and scoring checklists for specific mudras"
+    }
+  }
+}
